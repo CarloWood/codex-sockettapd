@@ -1,6 +1,7 @@
 add_executable(sockettapd
   sockettapd.cxx
   Application.cxx
+  ConfigSessionDecoder.cxx
   UUID.cxx
 )
 

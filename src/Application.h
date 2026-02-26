@@ -65,10 +65,10 @@ class Application
 
   void run();
 
-  void set_thread_id(std::string_view const& thread_id_str)
+  void set_thread_id(UUID const& thread_id)
   {
-    DoutEntering(dc::notice, "Application::set_thread_id(\"" << thread_id_str << "\")");
-    thread_id_.assign_from_string(thread_id_str);
+    DoutEntering(dc::notice, "Application::set_thread_id(" << thread_id << ")");
+    thread_id_ = thread_id;
   }
 
  protected:

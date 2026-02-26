@@ -1,11 +1,13 @@
 #include "sys.h"
 #include "Application.h"
+#include "ConfigSessionDecoder.h"
 #include "evio/EventLoop.h"
 #include "evio/SocketAddress.h"
 #include "evio/AcceptedSocket.h"
 #include "evio/ListenSocket.h"
 #include "utils/threading/Gate.h"
 #include "utils/debug_ostream_operators.h"      // Needed to write error to Dout.
+#include "utils/AIAlert.h"
 #include "debug.h"
 #ifdef CWDEBUG
 #include <libcwd/buf2str.h>
@@ -17,10 +19,6 @@ class STDecoder : public evio::protocol::Decoder
 {
  public:
   STDecoder() = default;
-  STDecoder(int n)
-  {
-    DoutEntering(dc::notice, "STDecoder(" << n << ")");
-  }
 
  protected:
   // Call decode() with chunks ending on a newline (the default).
@@ -36,12 +34,16 @@ class STDecoder : public evio::protocol::Decoder
       close_input_device(allow_deletion_count);
 #endif
 
-//    if (... get Thread ID for the first time ...)
+    std::string_view const line = msg.view();
+    if (line.starts_with("<config-session>"))
     {
-      std::string thread_id = "019c9a05-9ea4-70e3-8ac8-04920f774e55";
-      Application::instance().set_thread_id(thread_id);
+      config_session_decoder_.begin(*this);
+      switch_protocol_decoder(config_session_decoder_);
     }
   }
+
+ private:
+  ConfigSessionDecoder config_session_decoder_;
 };
 
 // The type of the accepted socket uses STDecoder as decoder.
@@ -50,11 +52,10 @@ using STAcceptedSocket = evio::AcceptedSocket<STDecoder, evio::OutputStream>;
 // The type of the listen socket of this daemon.
 class STListenSocket : public evio::ListenSocket<STAcceptedSocket>
 {
-  // Override spawn_accepted so that we can construct STAcceptedSocket with an argument.
   void spawn_accepted(int fd, evio::SocketAddress const& remote_address) override
   {
-    auto sock = evio::create<STAcceptedSocket>(STDecoder{42});
-    sock->on_disconnected([](int& allow_deletion_count, bool cleanly_closed) {
+    auto sock = evio::create<STAcceptedSocket>();
+    sock->on_disconnected([](int& UNUSED_ARG(allow_deletion_count), bool UNUSED_ARG(cleanly_closed)) {
       // Terminate application if the (only) client exits.
       Application::instance().quit();
     });
