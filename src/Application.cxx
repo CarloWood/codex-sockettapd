@@ -1,7 +1,9 @@
 #include "sys.h"
 #include "Application.h"
 #include "version.h"
+#include "utils.h"
 #include "evio/EventLoop.h"
+#include "utils/AIAlert.h"
 #ifdef CWDEBUG
 #include "utils/debug_ostream_operators.h"
 #endif
@@ -33,6 +35,27 @@ Application::~Application()
 void Application::parse_command_line_parameters(int argc, char* argv[])
 {
   DoutEntering(dc::notice, "Application::parse_command_line_parameters(" << argc << ", " << NAMESPACE_DEBUG::print_argv(argv) << ")");
+
+  for (int i = 1; i < argc; ++i)
+  {
+    std::string_view const arg(argv[i]);
+    if (arg == "--help" || arg == "-h")
+    {
+      print_usage();
+      throw NoError{};
+    }
+
+    if (arg == "--version")
+    {
+      print_version();
+      throw NoError{};
+    }
+
+    if (parse_command_line_parameter(arg, argc, argv, &i))
+      continue;
+
+    THROW_ALERT("Unknown argument: [ARG]", AIArgs("[ARG]", arg));
+  }
 }
 
 //virtual
@@ -66,6 +89,30 @@ int Application::thread_pool_reserved_threads(QueuePriority UNUSED_ARG(priority)
   return default_reserved_threads;
 }
 
+void Application::print_usage() const
+{
+  std::cerr << "Usage: " << utf8_to_string(application_name()) << " [--help] [--version]";
+  print_usage_extra(std::cerr);
+  std::cerr << "\n";
+}
+
+void Application::print_version() const
+{
+  auto [major, minor] = application_info_.version();
+  std::cout << utf8_to_string(application_name()) << ' ' << major << '.' << minor << "\n";
+}
+
+//virtual
+bool Application::parse_command_line_parameter(std::string_view /*arg*/, int /*argc*/, char*[] /*argv*/, int* /*index*/)
+{
+  return false;
+}
+
+//virtual
+void Application::print_usage_extra(std::ostream& /*os*/) const
+{
+}
+
 // Finish initialization of a default constructed Application.
 void Application::initialize(int argc, char** argv)
 {
@@ -74,8 +121,15 @@ void Application::initialize(int argc, char** argv)
   // Only call initialize once. Calling it twice leads to a nasty dead-lock that was hard to debug ;).
   ASSERT(!event_loop_);
 
+  // From version.h.
+  application_info_.set_application_name(application_name_c);
+  application_info_.set_application_version(application_version_c);
+
   try
   {
+    // Initialize the first thread pool queue.
+    low_priority_queue_ = thread_pool_.new_queue(thread_pool_queue_capacity(QueuePriority::low));
+
     // Parse command line parameters before doing any initialization, so the command line arguments can influence the initialization too.
 
     // Allow the user to override stuff.
@@ -122,10 +176,6 @@ void Application::initialize(int argc, char** argv)
       ASSERT(0 <= color && color < color_on_escape_codes.size());
       return color_on_escape_codes[color];
     }));
-
-    // Initialize the first thread pool queue.
-    //high_priority_queue_ = thread_pool_.new_queue(thread_pool_queue_capacity(QueuePriority::high), thread_pool_reserved_threads(QueuePriority::high));
-    low_priority_queue_ = thread_pool_.new_queue(thread_pool_queue_capacity(QueuePriority::low));
   }
   catch (AIAlert::Error const& error)
   {
@@ -145,11 +195,6 @@ void Application::initialize(int argc, char** argv)
 
   // Set up the I/O event loop.
   event_loop_ = std::make_unique<evio::EventLoop>(low_priority_queue_ COMMA_CWDEBUG_ONLY("\e[36m", "\e[0m"));
-
-  ApplicationInfo application_info;
-  // From version.h.
-  application_info.set_application_name(application_name_c);
-  application_info.set_application_version(application_version_c);
 }
 
 void Application::quit()

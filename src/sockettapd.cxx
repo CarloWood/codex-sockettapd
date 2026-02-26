@@ -1,5 +1,5 @@
 #include "sys.h"
-#include "Application.h"
+#include "Sockettapd.h"
 #include "STListenSocket.h"
 #include "evio/EventLoop.h"
 #include "utils/debug_ostream_operators.h"      // Needed to write error to Dout.
@@ -11,30 +11,35 @@ int main(int argc, char* argv[])
   Debug(NAMESPACE_DEBUG::init());
   Dout(dc::notice, "Entering main()");
 
-  Application application;
-  application.initialize(argc, argv);
-
-  std::string projectdir = ::getenv("TOPPROJECT");
-  std::string socket_address = projectdir + "/shell_exec.sock";
-  evio::SocketAddress endpoint(socket_address);
-  Dout(dc::notice, "endpoint = " << endpoint);
-
-  // An object that allows us to write to an ostream
-  // in order to write to (the buffer of) the socket.
-  evio::OutputStream socket_stream;
-
   try
   {
-    // Create a listen socket.
-    auto listen_socket = evio::create<STListenSocket>();
-    listen_socket->listen(endpoint);
+    Sockettapd application(argc, argv);
 
-    // Run the application.
-    application.run();
+    std::string projectdir = ::getenv("TOPPROJECT");
+    std::string socket_address = projectdir + "/shell_exec.sock";
+    evio::SocketAddress endpoint(socket_address);
+    Dout(dc::notice, "endpoint = " << endpoint);
+
+    // An object that allows us to write to an ostream
+    // in order to write to (the buffer of) the socket.
+    evio::OutputStream socket_stream;
+
+    try
+    {
+      // Create a listen socket.
+      auto listen_socket = evio::create<STListenSocket>();
+      listen_socket->listen(endpoint);
+
+      // Run the application.
+      application.run();
+    }
+    catch (AIAlert::Error const& error)
+    {
+      Dout(dc::warning, error);
+    }
   }
-  catch (AIAlert::Error const& error)
+  catch (NoError const&)
   {
-    Dout(dc::warning, error);
   }
 
   Dout(dc::notice, "Leaving main()");

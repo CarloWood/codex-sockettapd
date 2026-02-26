@@ -15,6 +15,10 @@ namespace evio {
 class EventLoop;
 } // namespace evio
 
+// If this is thrown from the constructor Appliction we simply must exit the application.
+struct NoError : public std::exception {
+};
+
 class Application
 {
  public:
@@ -71,9 +75,16 @@ class Application
     thread_id_ = thread_id;
   }
 
- protected:
-  virtual void parse_command_line_parameters(int argc, char* argv[]);
+  // Print common usage text and derived-class usage suffix.
+  void print_usage() const;
 
+ private:
+  void parse_command_line_parameters(int argc, char* argv[]);
+
+  // Print application name and decoded version.
+  void print_version() const;
+
+ protected:
   // Override this function to change the number of worker threads.
   virtual int thread_pool_number_of_worker_threads() const;
 
@@ -82,6 +93,12 @@ class Application
 
   // Override this function to change the number of reserved threads for each queue (except the last, of course).
   virtual int thread_pool_reserved_threads(QueuePriority UNUSED_ARG(priority)) const;
+
+  // Parse a derived-class specific command line parameter.
+  virtual bool parse_command_line_parameter(std::string_view arg, int argc, char* argv[], int* index);
+
+  // Print derived-class specific usage suffix.
+  virtual void print_usage_extra(std::ostream& os) const;
 
  public:
   // Override this function to change the default ApplicationInfo values.

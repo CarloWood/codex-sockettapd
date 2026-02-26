@@ -3,7 +3,9 @@ add_executable(sockettapd
   Application.cxx
   ConfigSessionDecoder.cxx
   STDecoder.cxx
+  Sockettapd.cxx
   UUID.cxx
+  utils.cxx
 )
 
 target_include_directories(sockettapd
