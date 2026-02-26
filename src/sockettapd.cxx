@@ -30,9 +30,17 @@ class STDecoder : public evio::protocol::Decoder
     DoutEntering(dc::notice, "STDecoder::decode({" << allow_deletion_count <<
         "}, \"" << buf2str(msg.get_start(), msg.get_size()) << "\") [" << this << ']');
 
+#if 0
     // Close this connection as soon as we received "Hello world!\n".
     if (std::string_view(msg.get_start(), msg.get_size()) == "Hello world!\n")
       close_input_device(allow_deletion_count);
+#endif
+
+//    if (... get Thread ID for the first time ...)
+    {
+      std::string thread_id = "019c9a05-9ea4-70e3-8ac8-04920f774e55";
+      Application::instance().set_thread_id(thread_id);
+    }
   }
 };
 

@@ -1,6 +1,7 @@
 add_executable(sockettapd
   sockettapd.cxx
   Application.cxx
+  UUID.cxx
 )
 
 target_include_directories(sockettapd

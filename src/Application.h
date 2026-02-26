@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ApplicationInfo.h"
+#include "UUID.h"
 #include "utils/threading/Gate.h"
 #include "threadpool/AIThreadPool.h"
 #include <string>
@@ -48,6 +49,8 @@ class Application
   static Application* s_instance;                               // There can only be one instance of Application. Allow global access.
   ApplicationInfo application_info_;                            // Metadata captured during initialize().
 
+  UUID thread_id_;                                              // The Thread ID of the Codex chat session.
+
  public:
   Application();
   ~Application();
@@ -61,6 +64,12 @@ class Application
   AIQueueHandle low_priority_queue() const { return low_priority_queue_; }
 
   void run();
+
+  void set_thread_id(std::string_view const& thread_id_str)
+  {
+    DoutEntering(dc::notice, "Application::set_thread_id(\"" << thread_id_str << "\")");
+    thread_id_.assign_from_string(thread_id_str);
+  }
 
  protected:
   virtual void parse_command_line_parameters(int argc, char* argv[]);
