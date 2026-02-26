@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
   {
     Sockettapd application(argc, argv);
 
-    std::string projectdir = ::getenv("TOPPROJECT");
+    std::string projectdir = ::getenv("PROJECTDIR");
     std::string socket_address = projectdir + "/shell_exec.sock";
     evio::SocketAddress endpoint(socket_address);
     Dout(dc::notice, "endpoint = " << endpoint);
