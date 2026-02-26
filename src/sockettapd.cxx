@@ -1,6 +1,7 @@
 #include "sys.h"
 #include "Application.h"
 #include "ConfigSessionDecoder.h"
+#include "STDecoder.h"
 #include "evio/EventLoop.h"
 #include "evio/SocketAddress.h"
 #include "evio/AcceptedSocket.h"
@@ -12,39 +13,6 @@
 #ifdef CWDEBUG
 #include <libcwd/buf2str.h>
 #endif
-
-// Decoder for the accepted socket.
-// ST = Socket Tap.
-class STDecoder : public evio::protocol::Decoder
-{
- public:
-  STDecoder() = default;
-
- protected:
-  // Call decode() with chunks ending on a newline (the default).
-  void decode(int& allow_deletion_count, evio::MsgBlock&& msg) override
-  {
-    // Just print what was received.
-    DoutEntering(dc::notice, "STDecoder::decode({" << allow_deletion_count <<
-        "}, \"" << buf2str(msg.get_start(), msg.get_size()) << "\") [" << this << ']');
-
-#if 0
-    // Close this connection as soon as we received "Hello world!\n".
-    if (std::string_view(msg.get_start(), msg.get_size()) == "Hello world!\n")
-      close_input_device(allow_deletion_count);
-#endif
-
-    std::string_view const line = msg.view();
-    if (line.starts_with("<config-session>"))
-    {
-      config_session_decoder_.begin(*this);
-      switch_protocol_decoder(config_session_decoder_);
-    }
-  }
-
- private:
-  ConfigSessionDecoder config_session_decoder_;
-};
 
 // The type of the accepted socket uses STDecoder as decoder.
 using STAcceptedSocket = evio::AcceptedSocket<STDecoder, evio::OutputStream>;
