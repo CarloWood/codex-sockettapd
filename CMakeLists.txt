@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.16...4.2.3)
 
 project(codex-sockettapd
+        VERSION 0.1
         LANGUAGES CXX
         DESCRIPTION "Daemon that creates and listens on a UNIX socket for messages from the Codex socket-tap.")
 
@@ -29,6 +30,8 @@ if (${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 endif()
 
 include(AICxxSubmodules)
+
+configure_file(version.h.in ${CMAKE_CURRENT_BINARY_DIR}/version.h @ONLY)
 
 add_subdirectory(enchantum)
 add_subdirectory(src)

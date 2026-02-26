@@ -1,4 +1,5 @@
 #include "sys.h"
+#include "Application.h"
 #include "evio/EventLoop.h"
 #include "evio/SocketAddress.h"
 #include "evio/AcceptedSocket.h"
@@ -45,6 +46,10 @@ class STListenSocket : public evio::ListenSocket<STAcceptedSocket>
   void spawn_accepted(int fd, evio::SocketAddress const& remote_address) override
   {
     auto sock = evio::create<STAcceptedSocket>(STDecoder{42});
+    sock->on_disconnected([](int& allow_deletion_count, bool cleanly_closed) {
+      // Terminate application if the (only) client exits.
+      Application::instance().quit();
+    });
     sock->init(fd, remote_address);
     new_connection(*sock);
   }
@@ -61,8 +66,8 @@ int main(int argc, char* argv[])
   Debug(NAMESPACE_DEBUG::init());
   Dout(dc::notice, "Entering main()");
 
-  AIThreadPool thread_pool(2);
-  AIQueueHandle low_priority_queue = thread_pool.new_queue(8);
+  Application application;
+  application.initialize(argc, argv);
 
   std::string projectdir = ::getenv("TOPPROJECT");
   std::string socket_address = projectdir + "/shell_exec.sock";
@@ -75,14 +80,12 @@ int main(int argc, char* argv[])
 
   try
   {
-    evio::EventLoop event_loop(low_priority_queue);
-
     // Create a listen socket.
     auto listen_socket = evio::create<STListenSocket>();
     listen_socket->listen(endpoint);
 
-    // Terminate application.
-    event_loop.join();
+    // Run the application.
+    application.run();
   }
   catch (AIAlert::Error const& error)
   {
