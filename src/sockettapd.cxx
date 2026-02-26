@@ -1,42 +1,10 @@
 #include "sys.h"
 #include "Application.h"
-#include "ConfigSessionDecoder.h"
-#include "STDecoder.h"
+#include "STListenSocket.h"
 #include "evio/EventLoop.h"
-#include "evio/SocketAddress.h"
-#include "evio/AcceptedSocket.h"
-#include "evio/ListenSocket.h"
-#include "utils/threading/Gate.h"
 #include "utils/debug_ostream_operators.h"      // Needed to write error to Dout.
 #include "utils/AIAlert.h"
 #include "debug.h"
-#ifdef CWDEBUG
-#include <libcwd/buf2str.h>
-#endif
-
-// The type of the accepted socket uses STDecoder as decoder.
-using STAcceptedSocket = evio::AcceptedSocket<STDecoder, evio::OutputStream>;
-
-// The type of the listen socket of this daemon.
-class STListenSocket : public evio::ListenSocket<STAcceptedSocket>
-{
-  void spawn_accepted(int fd, evio::SocketAddress const& remote_address) override
-  {
-    auto sock = evio::create<STAcceptedSocket>();
-    sock->on_disconnected([](int& UNUSED_ARG(allow_deletion_count), bool UNUSED_ARG(cleanly_closed)) {
-      // Terminate application if the (only) client exits.
-      Application::instance().quit();
-    });
-    sock->init(fd, remote_address);
-    new_connection(*sock);
-  }
-
-  // As soon as the first connection is received, close this listen socket.
-  void new_connection(accepted_socket_type& UNUSED_ARG(accepted_socket)) override
-  {
-    close();
-  }
-};
 
 int main(int argc, char* argv[])
 {
