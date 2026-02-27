@@ -1,10 +1,13 @@
 #include "sys.h"
 #include "Sockettapd.h"
 #include "utils/AIAlert.h"
+#include <unistd.h>
 
 Sockettapd::Sockettapd(int argc, char* argv[])
 {
   Application::initialize(argc, argv);
+  if (!opt_foreground_)
+    goto_background();
 }
 
 Sockettapd::~Sockettapd() = default;
@@ -14,13 +17,13 @@ bool Sockettapd::parse_command_line_parameter(std::string_view arg, int argc, ch
 {
   DoutEntering(dc::notice, "Sockettapd::parse_command_line_parameter(\"" << arg << "\", " << argc << ", " << debug::print_argv(argv) << ", &" << index << ")");
 
-  if (arg == "--restart")
+  if (arg == "--one-shot")
   {
-    opt_restart_ = true;
+    opt_one_shot_ = true;
     return true;
   }
 
-  if (arg == "--foregound")
+  if (arg == "--foreground")
   {
     opt_foreground_ = true;
     return true;
@@ -37,7 +40,6 @@ bool Sockettapd::parse_command_line_parameter(std::string_view arg, int argc, ch
   }
 
   return false;
-
 }
 
 //virtual
@@ -54,4 +56,10 @@ std::u8string Sockettapd::application_name() const
 //static
 void Sockettapd::goto_background()
 {
+  // For now turn all debug out off.
+//  Debug(libcw_do.off());
+
+  // Closes stdin/stdout/stderr and changes cwd to "/".
+  if (::daemon(0, 1) == -1)
+    THROW_ALERTE("daemon");
 }

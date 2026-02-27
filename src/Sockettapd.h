@@ -10,7 +10,7 @@ class Sockettapd final : public Application
 {
  private:
   bool opt_foreground_{false};          // Set if --foreground.
-  bool opt_restart_{false};             // Set if --restart.
+  bool opt_one_shot_{false};            // Set if --one-shot.
   std::filesystem::path project_dir_;   // Argument passed to --projectdir <dir>.
 
  public:
@@ -23,8 +23,11 @@ class Sockettapd final : public Application
   // Run as daemon.
   static void goto_background();
 
+  // Get application instance.
+  static Sockettapd& instance() { return static_cast<Sockettapd&>(Application::instance()); }
+
   // Option accessors.
-  bool restart() const { return opt_restart_; }
+  bool one_shot() const { return opt_one_shot_; }
   bool foreground() const { return opt_foreground_; }
 
  protected:
