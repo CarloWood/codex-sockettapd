@@ -23,6 +23,14 @@ Sockettapd::~Sockettapd()
 //virtual
 void Sockettapd::command_line_parameters_parsed()
 {
+  DoutEntering(dc::notice, "Sockettapd::command_line_parameters_parsed()");
+
+  // Make logfile_name_ absolute.
+  if (logfile_name_.is_relative())
+    logfile_name_ = project_dir_ / logfile_name_;
+
+  Dout(dc::notice, "logfile_name_ is now " << logfile_name_);
+
   // Switch to the background BEFORE creating any threads!
   if (!opt_foreground_)
     goto_background();
@@ -71,6 +79,7 @@ bool Sockettapd::parse_command_line_parameter(std::string_view arg, int argc, ch
 //virtual
 void Sockettapd::print_usage_extra(std::ostream& os) const
 {
+  os << "[--one-shot][--foreground][--projectdir <dirname>][--log <logfile>]";
 }
 
 //virtual

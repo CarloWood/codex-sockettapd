@@ -26,9 +26,10 @@ class STListenSocket : public evio::ListenSocket<STAcceptedSocket>
     new_connection(*sock);
   }
 
-  // As soon as the first connection is received, close this listen socket.
   void new_connection(accepted_socket_type& UNUSED_ARG(accepted_socket)) override
   {
-    close();
+    // As soon as the first connection is received, close this listen socket if --one-shot.
+    if (Sockettapd::instance().one_shot())
+      close();
   }
 };

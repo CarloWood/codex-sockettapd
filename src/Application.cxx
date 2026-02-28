@@ -99,7 +99,7 @@ void Application::print_usage() const
 void Application::print_version() const
 {
   auto [major, minor] = application_info_.version();
-  std::cout << utf8_to_string(application_name()) << ' ' << major << '.' << minor << "\n";
+  std::cout << utf8_to_string(application_name()) << " v" << major << '.' << minor << "\n";
 }
 
 //virtual
