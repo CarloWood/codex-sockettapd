@@ -1,4 +1,5 @@
 #include "sys.h"
+#include "Sockettapd.h"
 #include "STDecoder.h"
 #include "debug.h"
 
@@ -14,4 +15,11 @@ void STDecoder::decode(int& allow_deletion_count, evio::MsgBlock&& msg)
     config_session_decoder_.begin(*this);
     switch_protocol_decoder(config_session_decoder_);
   }
+}
+
+void STDecoder::thread_id_received(UUID const& thread_id)
+{
+  DoutEntering(dc::notice, "STDecoder::thread_id_received(" << thread_id << ") [" << this << ']');
+
+  Sockettapd::instance().received_thread_id(thread_id);
 }

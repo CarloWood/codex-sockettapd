@@ -53,8 +53,6 @@ class Application
   static Application* s_instance;                               // There can only be one instance of Application. Allow global access.
   ApplicationInfo application_info_;                            // Metadata captured during initialize().
 
-  UUID thread_id_;                                              // The Thread ID of the Codex chat session.
-
  public:
   Application();
   ~Application();
@@ -68,12 +66,6 @@ class Application
   AIQueueHandle low_priority_queue() const { return low_priority_queue_; }
 
   void run();
-
-  void set_thread_id(UUID const& thread_id)
-  {
-    DoutEntering(dc::notice, "Application::set_thread_id(" << thread_id << ")");
-    thread_id_ = thread_id;
-  }
 
   // Print common usage text and derived-class usage suffix.
   void print_usage() const;

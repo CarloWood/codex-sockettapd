@@ -10,6 +10,9 @@ class STDecoder : public evio::protocol::Decoder
  public:
   STDecoder() = default;
 
+  // Called by config_session_decoder_.
+  void thread_id_received(UUID const& thread_id);
+
  protected:
   // Call decode() with chunks ending on a newline (the default).
   void decode(int& allow_deletion_count, evio::MsgBlock&& msg) override;

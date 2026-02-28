@@ -1,4 +1,5 @@
 #include "sys.h"
+#include "STDecoder.h"
 #include "ConfigSessionDecoder.h"
 #include "Application.h"
 #include "utils/AIAlert.h"
@@ -36,10 +37,11 @@ void ConfigSessionDecoder::decode(int& allow_deletion_count, evio::MsgBlock&& ms
     if (!have_thread_id_)
       THROW_LALERT("Received </config-session> without <session-id> block!");
 
-    Application::instance().set_thread_id(thread_id_);
-
     // Call begin(return_decoder) before passing ConfigSessionDecoder the to switch_protocol_decoder.
     ASSERT(return_decoder_);
     switch_protocol_decoder(*return_decoder_);
+
+    // Pass the decoded Thread ID back to STDecoder.
+    return_decoder_->thread_id_received(thread_id_);
   }
 }

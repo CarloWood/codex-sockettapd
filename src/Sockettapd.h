@@ -31,6 +31,9 @@ class Sockettapd final : public Application
   // Run as daemon.
   void goto_background();
 
+  // Called when a thread ID was received through the <config-session>...</config-session> message.
+  void received_thread_id(UUID const& thread_id);
+
   // Get application instance.
   static Sockettapd& instance() { return static_cast<Sockettapd&>(Application::instance()); }
 

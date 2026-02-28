@@ -4,15 +4,17 @@
 #include "evio/protocol/Decoder.h"
 #include "evio/StreamBuf.h"
 
+class STDecoder;
+
 class ConfigSessionDecoder : public evio::protocol::Decoder
 {
  private:
   UUID thread_id_;
-  evio::Sink* return_decoder_ = nullptr;
+  STDecoder* return_decoder_ = nullptr;
   bool have_thread_id_ = false;
 
  public:
-  void begin(evio::Sink& return_decoder)
+  void begin(STDecoder& return_decoder)
   {
     return_decoder_ = &return_decoder;
     have_thread_id_ = false;
