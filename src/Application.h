@@ -35,8 +35,8 @@ class Application
   static Application& instance() { return *s_instance; }
 
  protected:
-   // Create the thread pool.
-  AIThreadPool thread_pool_;
+  // Pointer to the thread pool; initialized in initialize.
+  std::unique_ptr<AIThreadPool> thread_pool_;
 
   // And the thread pool queues.
 //  AIQueueHandle m_high_priority_queue;
@@ -96,6 +96,9 @@ class Application
 
   // Parse a derived-class specific command line parameter.
   virtual bool parse_command_line_parameter(std::string_view arg, int argc, char* argv[], int* index);
+
+  // Called after all command line parameters where parsed.
+  virtual void command_line_parameters_parsed() { }
 
   // Print derived-class specific usage suffix.
   virtual void print_usage_extra(std::ostream& os) const;

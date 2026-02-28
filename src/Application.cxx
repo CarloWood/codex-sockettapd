@@ -16,7 +16,7 @@ Application* Application::s_instance;
 //
 // Because this is a base class, virtual functions can't be used in the constructor.
 // Therefore initialization happens after construction.
-Application::Application() : thread_pool_(1)
+Application::Application()
 {
   DoutEntering(dc::notice, "Application::Application()");
   s_instance = this;
@@ -80,7 +80,7 @@ int Application::thread_pool_number_of_worker_threads() const
 int Application::thread_pool_queue_capacity(QueuePriority UNUSED_ARG(priority)) const
 {
   // By default, make the size of each thread pool queue equal to the number of worker threads.
-  return thread_pool_.number_of_workers();
+  return thread_pool_->number_of_workers();
 }
 
 //virtual
@@ -127,18 +127,22 @@ void Application::initialize(int argc, char** argv)
 
   try
   {
-    // Initialize the first thread pool queue.
-    low_priority_queue_ = thread_pool_.new_queue(thread_pool_queue_capacity(QueuePriority::low));
-
     // Parse command line parameters before doing any initialization, so the command line arguments can influence the initialization too.
-
     // Allow the user to override stuff.
     if (argc > 0)
       parse_command_line_parameters(argc, argv);
 
+    // Notify the derived class that all command line parameters have been parsed.
+    command_line_parameters_parsed();
+
+    // Now that we (potentially) have switched to the background we can create the thread pool.
+    thread_pool_ = std::make_unique<AIThreadPool>(thread_pool_number_of_worker_threads());
+
+    // Initialize the first thread pool queue.
+    low_priority_queue_ = thread_pool_->new_queue(thread_pool_queue_capacity(QueuePriority::low));
+
     // Initialize the thread pool.
-    thread_pool_.change_number_of_threads_to(thread_pool_number_of_worker_threads());
-    Debug(thread_pool_.set_color_functions([](int color){
+    Debug(thread_pool_->set_color_functions([](int color){
       static std::array<std::string, 32> color_on_escape_codes = {
         "\e[38;5;1m",
         "\e[38;5;190m",

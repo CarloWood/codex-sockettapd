@@ -10,10 +10,16 @@ int main(int argc, char* argv[])
 {
   Debug(NAMESPACE_DEBUG::init());
   Dout(dc::notice, "Entering main()");
+  Debug(libcw_do.always_flush_on());
 
   try
   {
     Sockettapd application(argc, argv);
+
+    // If --foreground is not specified then now we are running as a background process.
+
+    // Check that libcwd is always flushing.
+    ASSERT(libcwd::libcw_do.always_flush_is_on());
 
     std::string projectdir = ::getenv("PROJECTDIR");
     std::string socket_address = projectdir + "/shell_exec.sock";
@@ -28,6 +34,7 @@ int main(int argc, char* argv[])
     {
       // Create a listen socket.
       auto listen_socket = evio::create<STListenSocket>();
+      Dout(dc::notice, "Writing to this log file 7.");
       listen_socket->listen(endpoint);
 
       // Run the application.
